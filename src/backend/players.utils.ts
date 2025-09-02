@@ -6,6 +6,7 @@ export function generatePlayer(playerName: string, isHost: boolean): Player {
         connected: true,
         role: 'villager',
         team: 'village',
+        isReady: false,
         isHost,
     };
 }

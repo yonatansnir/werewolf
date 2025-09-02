@@ -121,6 +121,8 @@ app.post("/api/start-game", (req, res) => {
   res.json(game);
 });
 
+const rolesAllowedToSwap: Role[] = ["robber", "troublemaker"];
+
 app.post("/api/swap-players", (req, res) => {
   console.log("Swap players", req.body);
   const { playerId, targetPlayerId, gameId } = req.body;
@@ -133,8 +135,8 @@ app.post("/api/swap-players", (req, res) => {
   const player = game.players.find((p) => p.id === playerId);
   const targetPlayer = game.players.find((p) => p.id === targetPlayerId);
   if (!player || !targetPlayer) throw new Error("Player not found");
-  if (player.role !== "robber")
-    throw new Error("Only the robber can swap players");
+  if (!rolesAllowedToSwap.includes(player.role))
+    throw new Error("Only robber or troublemaker can swap players");
 
   // Swap roles
   const playerRole = player.role;
@@ -154,6 +156,28 @@ app.post("/api/swap-players", (req, res) => {
   });
 
   res.json(game);
+});
+
+app.post("/api/ready", (req, res) => {
+  console.log("Ready To play", req.body);
+  const { playerId, gameId } = req.body;
+  if (!playerId || !gameId) throw new Error("player id or game id is missing");
+  const game = games.get(gameId);
+  if (!game) throw new Error("Game not found");
+  const player = game.players.find((p) => p.id === playerId);
+  if (!player) throw new Error("Player not found");
+
+  player.isReady = true;
+  const isEveryPlayersAreReady = game.players.every((p) => p.isReady);
+  if (isEveryPlayersAreReady) {
+    game.gameState = "playing";
+  }
+  game.players.forEach((p) => {
+    const connection = connections.get(p.id);
+    if (!connection) return;
+    connection.response.write(`data: ${JSON.stringify(game)}\n\n`);
+  });
+  res.json({ status: "OK" });
 });
 
 app.listen(8080, () => {

@@ -1,4 +1,4 @@
-import { For } from "solid-js";
+import { For, createSignal } from "solid-js";
 import { game, player } from "../signals";
 import { roleDefinitions } from "../../shared/role-definitions";
 

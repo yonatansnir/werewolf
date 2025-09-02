@@ -10,6 +10,7 @@ interface Player {
     connected: boolean;
     role: Role;
     team: Team;
+    isReady: boolean;
     isHost: boolean;
 }
 

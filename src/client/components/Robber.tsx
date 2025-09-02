@@ -1,17 +1,23 @@
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, Show, type Setter } from "solid-js";
 import { roleDefinitions } from "../../shared/role-definitions";
 import { game, player } from "../signals";
 import { Eye } from "../icons";
-import { swapPlayers } from "../services";
 
-export function Robber() {
+interface RobberProps {
+  setSwapPlayers: Setter<{
+    player1: string;
+    player2: string;
+  }>;
+}
+
+export function Robber({ setSwapPlayers }: RobberProps) {
   const [targetPlayerId, setTargetPlayerId] = createSignal<string | null>(null);
 
-  const handleTargeting = async (playerId: string) => {
+  const handleTargeting = (playerId: string) => {
     const currentTarget = targetPlayerId();
     if (currentTarget) return;
     setTargetPlayerId(playerId);
-    await swapPlayers(player()!.id, playerId, game()!.id);
+    setSwapPlayers({ player1: player()!.id, player2: playerId });
   };
 
   return (

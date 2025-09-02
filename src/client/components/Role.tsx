@@ -1,4 +1,4 @@
-import { player } from "../signals";
+import { player, setPlayer, game } from "../signals";
 import { Eye } from "../icons";
 import { roleDefinitions } from "../../shared/role-definitions";
 import { createSignal, Match, Show, Switch } from "solid-js";
@@ -6,10 +6,50 @@ import { WerewolfList } from "./WerewolfList";
 import { Seer } from "./Seer";
 import { Robber } from "./Robber";
 import { Troublemaker } from "./Troublemaker";
+import {
+  swapPlayers as swapPlayersService,
+  updatePlayerToBeReady,
+} from "../services";
+
+const rolesNeedToSwap: Role[] = ["robber", "troublemaker"];
+
+const setPlayerToBeReady = () => {
+  setPlayer((p) => {
+    if (!p) return p;
+    return {
+      ...p,
+      isReady: true,
+    };
+  });
+};
 
 export function Role() {
   const [showRole, setShowRole] = createSignal(false);
+  const [swapPlayers, setSwapPlayers] = createSignal({
+    player1: "",
+    player2: "",
+  });
   const role = roleDefinitions[player()!.role];
+
+  const handleReadyToPlay = async () => {
+    if (rolesNeedToSwap.includes(player()!.role)) {
+      if (swapPlayers().player1 && swapPlayers().player2) {
+        swapPlayersService(
+          swapPlayers().player1,
+          swapPlayers().player2,
+          game()!.id
+        );
+
+        await updatePlayerToBeReady(game()!.id, player()!.id);
+        setPlayerToBeReady();
+      } else {
+        alert("Need to choose players to swap");
+      }
+    } else {
+      await updatePlayerToBeReady(game()!.id, player()!.id);
+      setPlayerToBeReady();
+    }
+  };
 
   return (
     <div class="min-h-screen bg-gradient-to-br from-gray-900 to-black p-4">
@@ -59,18 +99,27 @@ export function Role() {
                   />
                   <Match
                     when={player()!.role === "robber"}
-                    children={<Robber />}
+                    children={<Robber setSwapPlayers={setSwapPlayers} />}
                   />
                   <Match
                     when={player()!.role === "troublemaker"}
-                    children={<Troublemaker />}
+                    children={<Troublemaker setSwapPlayers={setSwapPlayers} />}
                   />
                 </Switch>
               </div>
-
-              <button class="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold text-lg transition-colors">
-                I'm Ready to Play!
-              </button>
+              <Show
+                when={!player()!.isReady}
+                fallback={
+                  <div class="text-white">Waiting for another players</div>
+                }
+              >
+                <button
+                  onClick={handleReadyToPlay}
+                  class="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold text-lg transition-colors"
+                >
+                  I'm Ready to Play!
+                </button>
+              </Show>
             </div>
           </div>
         </Show>

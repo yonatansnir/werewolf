@@ -1,4 +1,5 @@
 import { Match, Switch, createEffect, createMemo, onCleanup } from "solid-js";
+import { GameTimer } from "./components/GameTimer";
 import { Menu } from "./components/Menu";
 import { Lobby } from "./components/Lobby";
 import { game, player, setGame } from "./signals";
@@ -34,9 +35,12 @@ export function WerewolfGame() {
   return (
     <div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-4">
       <Switch fallback={<Menu />}>
-        {/* <Match when={gameState() === "menu"} children={} /> */}
         <Match when={game()?.gameState === "lobby"} children={<Lobby />} />
         <Match when={game()?.gameState === "roles"} children={<Role />} />
+        <Match
+          when={game()?.gameState === "playing"}
+          children={<GameTimer />}
+        />
       </Switch>
     </div>
   );

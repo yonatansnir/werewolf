@@ -4,7 +4,6 @@ import { game, player as playerMe } from "../signals";
 import { startGame } from "../services";
 
 export function Lobby() {
-
   const copyRoomCode = () => {
     const currentGame = game()?.id;
     if (!currentGame) return;
@@ -17,7 +16,7 @@ export function Lobby() {
     const currentPlayerId = playerMe()?.id;
     if (!currentGameId || !currentPlayerId) return;
     await startGame(currentGameId, currentPlayerId);
-  }
+  };
 
   return (
     <div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-4">

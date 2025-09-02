@@ -40,3 +40,12 @@ export async function swapPlayers(
 
   return response.data;
 }
+
+export async function updatePlayerToBeReady(gameId: string, playerId: string) {
+  const response = await axios.post<{ status: "OK" }>("/api/ready", {
+    gameId,
+    playerId,
+  });
+
+  return response.data;
+}
