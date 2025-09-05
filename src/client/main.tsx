@@ -1,11 +1,6 @@
 import { render } from "solid-js/web";
-import { WerewolfGame } from "./WerewolfGame";
+import { App } from "./App";
 
 const root = document.getElementById("root") as HTMLElement;
 
-render(
-  () => (
-      <WerewolfGame />
-  ),
-  root
-);
+render(() => <App />, root);

@@ -25,6 +25,7 @@ app.post("/api/create-game", (req, res) => {
     id: gameId,
     gameState: "lobby",
     players: [player],
+    swapTaskQueue: [],
     availableRoles,
   };
   console.log("Create Game", game);
@@ -79,7 +80,6 @@ app.get("/api/game", (req, res) => {
     "Cache-Control": "no-cache",
     Connection: "keep-alive",
   });
-  // res.flushHeaders();
 
   const connection: Connection = {
     playerId,
@@ -88,9 +88,19 @@ app.get("/api/game", (req, res) => {
 
   connections.set(connection.playerId, connection);
 
-  connection.response.on("close", () => {
+  req.on("close", () => {
     connections.delete(connection.playerId);
+    game.players = game.players.filter((p) => p.id !== playerId);
+    game.players.forEach((p) => {
+      const conn = connections.get(p.id);
+      if (!conn) return;
+      conn.response.write(`data: ${JSON.stringify(game)}\n\n`);
+    });
     console.log(`Player ${playerId} disconnected`);
+    if (game.players.length === 0) {
+      games.delete(game.id);
+      console.log(`Game ${game.id} deleted`);
+    }
   });
 
   connection.response.write(`id: ${Date.now()}\n`);
@@ -125,35 +135,30 @@ const rolesAllowedToSwap: Role[] = ["robber", "troublemaker"];
 
 app.post("/api/swap-players", (req, res) => {
   console.log("Swap players", req.body);
-  const { playerId, targetPlayerId, gameId } = req.body;
-  if (!playerId || !targetPlayerId || !gameId)
-    throw new Error("Player ID, Target Player ID, and Game ID are required");
+  const { playerId, firstPlayerId, secondPlayerId, gameId } = req.body;
+  if (!playerId || !firstPlayerId || !secondPlayerId || !gameId)
+    throw new Error(
+      "Player ID, First Player ID, Second Player ID, and Game ID are required"
+    );
 
   const game = games.get(gameId);
   if (!game) throw new Error("Game not found");
 
   const player = game.players.find((p) => p.id === playerId);
-  const targetPlayer = game.players.find((p) => p.id === targetPlayerId);
-  if (!player || !targetPlayer) throw new Error("Player not found");
+  const first = game.players.find((p) => p.id === firstPlayerId);
+  const second = game.players.find((p) => p.id === secondPlayerId);
+  if (!player || !first || !second) throw new Error("Player not found");
   if (!rolesAllowedToSwap.includes(player.role))
     throw new Error("Only robber or troublemaker can swap players");
 
-  // Swap roles
-  const playerRole = player.role;
-  const playerTeam = player.team;
+  game.swapTaskQueue.push({ playerId, firstPlayerId, secondPlayerId });
 
-  player.role = targetPlayer.role;
-  targetPlayer.role = playerRole;
-
-  player.team = targetPlayer.team;
-  targetPlayer.team = playerTeam;
-
-  game.players.forEach((p) => {
-    const connection = connections.get(p.id);
-    if (connection) {
-      connection.response.write(`data: ${JSON.stringify(game)}\n\n`);
-    }
-  });
+  // game.players.forEach((p) => {
+  //   const connection = connections.get(p.id);
+  //   if (connection) {
+  //     connection.response.write(`data: ${JSON.stringify(game)}\n\n`);
+  //   }
+  // });
 
   res.json(game);
 });
@@ -171,11 +176,53 @@ app.post("/api/ready", (req, res) => {
   const isEveryPlayersAreReady = game.players.every((p) => p.isReady);
   if (isEveryPlayersAreReady) {
     game.gameState = "playing";
+    game.swapTaskQueue.forEach(({ firstPlayerId, secondPlayerId }) => {
+      const firstPlayer = game.players.find((p) => p.id === firstPlayerId);
+      const secondPlayer = game.players.find((p) => p.id === secondPlayerId);
+
+      if (firstPlayer && secondPlayer) {
+        const tempRole = firstPlayer.role;
+        firstPlayer.role = secondPlayer.role;
+        secondPlayer.role = tempRole;
+        console.log(
+          `Swapped roles between ${player.playerName} and ${firstPlayer.playerName}`
+        );
+      }
+    });
   }
   game.players.forEach((p) => {
     const connection = connections.get(p.id);
     if (!connection) return;
     connection.response.write(`data: ${JSON.stringify(game)}\n\n`);
+  });
+  res.json({ status: "OK" });
+});
+
+app.post("/api/restart-game", (req, res) => {
+  console.log("Restart game", req.body);
+  const { gameId, playerId } = req.body;
+  if (typeof gameId !== "string") throw new Error("Game ID is required");
+  if (typeof playerId !== "string") throw new Error("Player ID is required");
+  const game = games.get(gameId);
+  if (!game) throw new Error("Game not found");
+  const isPlayerHost = game.players.find((p) => p.id === playerId)?.isHost;
+  if (!isPlayerHost) throw new Error("Only the host can restart the game");
+
+  game.gameState = "roles";
+  game.players.forEach((p) => (p.isReady = false));
+  game.swapTaskQueue = [];
+  const availableRoles = getAvailableRoles();
+  game.availableRoles = availableRoles;
+  game.players.forEach((p) => {
+    const index = Math.floor(Math.random() * availableRoles.length);
+    p.role = availableRoles.splice(index, 1)[0];
+  });
+
+  game.players.forEach((p) => {
+    const connection = connections.get(p.id);
+    if (connection) {
+      connection.response.write(`data: ${JSON.stringify(game)}\n\n`);
+    }
   });
   res.json({ status: "OK" });
 });

@@ -1,11 +1,11 @@
 import { For, createSignal } from "solid-js";
-import { game, player } from "../signals";
+import { game, playerId } from "../signals";
 import { roleDefinitions } from "../../shared/role-definitions";
 
 export function WerewolfList() {
   const otherWerewolf = () => {
     const werewolves = game()!.players.filter(
-      (p) => p.role === "werewolf" && p.id !== player()!.id
+      (p) => p.role === "werewolf" && p.id !== playerId()
     );
 
     return werewolves.length > 0 ? werewolves : null;

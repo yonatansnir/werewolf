@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 import { createNewGame, joinGame } from "../services";
-import { setGame, setPlayer } from "../signals";
+import { setGame, setPlayerId } from "../signals";
 import { Wifi, WifiOff } from "../icons";
 
 export function Menu() {
@@ -11,7 +11,7 @@ export function Menu() {
     const currentPlayerName = playerName();
     if (!currentPlayerName) return;
     const { game, player } = await createNewGame(currentPlayerName);
-    setPlayer(player);
+    setPlayerId(player.id);
     setGame(game);
   };
 
@@ -20,7 +20,7 @@ export function Menu() {
     const currentRoomCode = roomCode();
     if (!currentPlayerName || !currentRoomCode) return;
     const { game, player } = await joinGame(currentPlayerName, currentRoomCode);
-    setPlayer(player);
+    setPlayerId(player.id);
     setGame(game);
   };
 

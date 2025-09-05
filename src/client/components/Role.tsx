@@ -1,7 +1,7 @@
-import { player, setPlayer, game } from "../signals";
+import { playerId, game } from "../signals";
 import { Eye } from "../icons";
 import { roleDefinitions } from "../../shared/role-definitions";
-import { createSignal, Match, Show, Switch } from "solid-js";
+import { createMemo, createSignal, Match, Show, Switch } from "solid-js";
 import { WerewolfList } from "./WerewolfList";
 import { Seer } from "./Seer";
 import { Robber } from "./Robber";
@@ -13,41 +13,33 @@ import {
 
 const rolesNeedToSwap: Role[] = ["robber", "troublemaker"];
 
-const setPlayerToBeReady = () => {
-  setPlayer((p) => {
-    if (!p) return p;
-    return {
-      ...p,
-      isReady: true,
-    };
-  });
-};
-
 export function Role() {
   const [showRole, setShowRole] = createSignal(false);
   const [swapPlayers, setSwapPlayers] = createSignal({
     player1: "",
     player2: "",
   });
-  const role = roleDefinitions[player()!.role];
+  const currentPlayer = createMemo(
+    () => game()?.players.find((p) => p.id === playerId())!
+  );
+  const role = roleDefinitions[currentPlayer().role];
 
   const handleReadyToPlay = async () => {
-    if (rolesNeedToSwap.includes(player()!.role)) {
+    if (rolesNeedToSwap.includes(currentPlayer().role)) {
       if (swapPlayers().player1 && swapPlayers().player2) {
         swapPlayersService(
+          playerId()!,
           swapPlayers().player1,
           swapPlayers().player2,
           game()!.id
         );
 
-        await updatePlayerToBeReady(game()!.id, player()!.id);
-        setPlayerToBeReady();
+        await updatePlayerToBeReady(game()!.id, playerId()!);
       } else {
         alert("Need to choose players to swap");
       }
     } else {
-      await updatePlayerToBeReady(game()!.id, player()!.id);
-      setPlayerToBeReady();
+      await updatePlayerToBeReady(game()!.id, playerId()!);
     }
   };
 
@@ -92,23 +84,26 @@ export function Role() {
                   {role.description}
                 </p>
                 <Switch>
-                  <Match when={player()!.role === "seer"} children={<Seer />} />
                   <Match
-                    when={player()!.role === "werewolf"}
+                    when={currentPlayer().role === "seer"}
+                    children={<Seer />}
+                  />
+                  <Match
+                    when={currentPlayer().role === "werewolf"}
                     children={<WerewolfList />}
                   />
                   <Match
-                    when={player()!.role === "robber"}
+                    when={currentPlayer().role === "robber"}
                     children={<Robber setSwapPlayers={setSwapPlayers} />}
                   />
                   <Match
-                    when={player()!.role === "troublemaker"}
+                    when={currentPlayer().role === "troublemaker"}
                     children={<Troublemaker setSwapPlayers={setSwapPlayers} />}
                   />
                 </Switch>
               </div>
               <Show
-                when={!player()!.isReady}
+                when={!currentPlayer().isReady}
                 fallback={
                   <div class="text-white">Waiting for another players</div>
                 }

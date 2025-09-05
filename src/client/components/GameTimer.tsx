@@ -1,6 +1,7 @@
 import { createSignal, onCleanup, Show, For } from "solid-js";
-import { game } from "../signals";
+import { game, playerId } from "../signals";
 import { roleDefinitions } from "../../shared/role-definitions";
+import { restartGame } from "../services";
 
 const THREE_MINUTES_IN_SECOUND = 60 * 3;
 
@@ -18,11 +19,12 @@ const getColor = (percent: number) => {
 
 export function GameTimer() {
   const [progress, setProgress] = createSignal({
-    timeLeft: THREE_MINUTES_IN_SECOUND,
+    timeLeft: 2,
     percent: THREE_MINUTES_IN_SECOUND / THREE_MINUTES_IN_SECOUND,
     color: "bg-green-400",
   });
-
+  const currentPlayer = game()?.players.find((p) => p.id === playerId())!;
+  const roleDefinition = roleDefinitions[currentPlayer.role];
   const timer = setInterval(() => {
     setProgress((prev) => {
       const timeLeft = prev.timeLeft - 1;
@@ -38,6 +40,10 @@ export function GameTimer() {
   }, 1000);
 
   onCleanup(() => clearInterval(timer));
+
+  const handleRestartGame = async () => {
+    await restartGame(game()!.id, playerId()!);
+  };
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -59,20 +65,37 @@ export function GameTimer() {
         ></div>
       </div>
       <Show when={progress().timeLeft <= 0}>
-        <div class="grid-cols-2 gap-1.5">
+        <div class="grid-cols-2 gap-1 capitalize">
           <For each={game()!.players}>
             {(p) => {
               return (
-                <div class="m-3 p-3 bg-white/10 hover:bg-blue-600/30 text-white rounded-lg transition-colors text-center">
-                  <span class="text-sm font-mono text-white">
+                <div
+                  class={`m-3 p-3 ${
+                    p.id === playerId() ? "bg-blue-800" : "bg-white/10"
+                  } hover:bg-blue-600/30 text-white border-amber-500 rounded-lg transition-colors text-center`}
+                >
+                  <span class="text-ml font-mono text-white">
                     {roleDefinitions[p.role].icon} {p.role}
                   </span>
-                  <div class="text-xs font-medium">{p.playerName}</div>
+                  <div class="text-sm font-medium">
+                    {p.playerName}{" "}
+                    {playerId() === p.id && (
+                      <span class="text-purple-300 text-sm">(You)</span>
+                    )}
+                  </div>
                 </div>
               );
             }}
           </For>
         </div>
+      </Show>
+      <Show when={game()?.players.find((p) => p.id === playerId())?.isHost}>
+        <button
+          onClick={handleRestartGame}
+          class="my-4 p-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold text-lg transition-colors cursor-pointer"
+        >
+          Restart Game
+        </button>
       </Show>
     </div>
   );

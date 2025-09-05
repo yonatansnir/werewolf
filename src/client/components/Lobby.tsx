@@ -1,6 +1,6 @@
 import { For, Show } from "solid-js";
 import { Clock, Copy, Crown } from "../icons";
-import { game, player as playerMe } from "../signals";
+import { game, playerId } from "../signals";
 import { startGame } from "../services";
 
 export function Lobby() {
@@ -13,7 +13,7 @@ export function Lobby() {
 
   const handleStartGame = async () => {
     const currentGameId = game()?.id;
-    const currentPlayerId = playerMe()?.id;
+    const currentPlayerId = playerId();
     if (!currentGameId || !currentPlayerId) return;
     await startGame(currentGameId, currentPlayerId);
   };
@@ -52,7 +52,7 @@ export function Lobby() {
                     {player.playerName}
                   </span>
                   {player.isHost && <Crown class="w-4 h-4 text-yellow-400" />}
-                  {player.id === playerMe()?.id && (
+                  {player.id === playerId() && (
                     <span class="text-purple-300 text-sm">(You)</span>
                   )}
                 </div>
@@ -68,7 +68,7 @@ export function Lobby() {
           </Show>
         </div>
         <Show
-          when={playerMe()?.isHost}
+          when={game()?.players.find((p) => p.id === playerId())?.isHost}
           fallback={
             <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-6">
               <div class="flex items-center justify-center gap-2 text-white/60">

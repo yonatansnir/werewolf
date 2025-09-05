@@ -1,5 +1,5 @@
 import { createSignal, For, Show } from "solid-js";
-import { game, player } from "../signals";
+import { game, playerId } from "../signals";
 import { Eye } from "../icons";
 import { roleDefinitions } from "../../shared/role-definitions";
 
@@ -19,7 +19,7 @@ export function Seer() {
         <div class="grid grid-cols-2 gap-2">
           <For each={game()!.players}>
             {(p) => {
-              if (p.id === player()!.id) return null;
+              if (p.id === playerId()) return null;
               return (
                 <button
                   onClick={() => handleInvestigating(p.id)}

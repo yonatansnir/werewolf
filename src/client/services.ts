@@ -29,12 +29,14 @@ export async function startGame(gameId: string, playerId: string) {
 
 export async function swapPlayers(
   playerId: string,
-  targetPlayerId: string,
+  firstPlayerId: string,
+  secondPlayerId: string,
   gameId: string
 ) {
   const response = await axios.post<Game>("/api/swap-players", {
     playerId,
-    targetPlayerId,
+    firstPlayerId,
+    secondPlayerId,
     gameId,
   });
 
@@ -43,6 +45,15 @@ export async function swapPlayers(
 
 export async function updatePlayerToBeReady(gameId: string, playerId: string) {
   const response = await axios.post<{ status: "OK" }>("/api/ready", {
+    gameId,
+    playerId,
+  });
+
+  return response.data;
+}
+
+export async function restartGame(gameId: string, playerId: string) {
+  const response = await axios.post<{ status: "OK" }>("/api/restart-game", {
     gameId,
     playerId,
   });

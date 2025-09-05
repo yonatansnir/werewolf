@@ -1,6 +1,6 @@
 import { createSignal, For, Show, type Setter } from "solid-js";
 import { roleDefinitions } from "../../shared/role-definitions";
-import { game, player } from "../signals";
+import { game, playerId } from "../signals";
 import { Eye } from "../icons";
 
 interface RobberProps {
@@ -13,11 +13,11 @@ interface RobberProps {
 export function Robber({ setSwapPlayers }: RobberProps) {
   const [targetPlayerId, setTargetPlayerId] = createSignal<string | null>(null);
 
-  const handleTargeting = (playerId: string) => {
+  const handleTargeting = (pId: string) => {
     const currentTarget = targetPlayerId();
     if (currentTarget) return;
-    setTargetPlayerId(playerId);
-    setSwapPlayers({ player1: player()!.id, player2: playerId });
+    setTargetPlayerId(pId);
+    setSwapPlayers({ player1: playerId()!, player2: pId });
   };
 
   return (
@@ -28,6 +28,7 @@ export function Robber({ setSwapPlayers }: RobberProps) {
       <div class="grid grid-cols-2 gap-2">
         <For each={game()?.players}>
           {(p) => {
+            if (p.id === playerId()) return null;
             return (
               <button
                 onClick={() => handleTargeting(p.id)}

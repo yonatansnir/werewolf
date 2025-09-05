@@ -1,6 +1,6 @@
 import { createSignal, For, type Setter } from "solid-js";
 import { roleDefinitions } from "../../shared/role-definitions";
-import { game, player } from "../signals";
+import { game, playerId } from "../signals";
 import { Eye } from "../icons";
 
 interface TroublemakerProps {
@@ -15,10 +15,10 @@ export function Troublemaker({ setSwapPlayers }: TroublemakerProps) {
     new Set()
   );
 
-  const handleTargeting = async (playerId: string) => {
+  const handleTargeting = async (pId: string) => {
     const currentTarget = targetPlayersId();
     if (currentTarget.size === 2) return;
-    currentTarget.add(playerId);
+    currentTarget.add(pId);
     const [player1, player2] = Array.from(currentTarget);
     setTargetPlayersId(new Set(currentTarget));
     setSwapPlayers({ player1: player1 || "", player2: player2 || "" });
@@ -31,7 +31,7 @@ export function Troublemaker({ setSwapPlayers }: TroublemakerProps) {
           {roleDefinitions.troublemaker.nightAction}
         </p>
         <div class="grid grid-cols-2 gap-2">
-          <For each={game()?.players.filter((p) => p.id !== player()!.id)}>
+          <For each={game()?.players.filter((p) => p.id !== playerId())}>
             {(p) => {
               return (
                 <button
