@@ -1,9 +1,9 @@
 import axios from "axios";
 
-export async function createNewGame(playerName: string) {
+export async function createNewGame(playerName: string, cards: Role[]) {
   const response = await axios.post<{ game: Game; player: Player }>(
     "/api/create-game",
-    { playerName }
+    { playerName, cards }
   );
 
   return response.data;

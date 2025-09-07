@@ -80,7 +80,7 @@ export function Lobby() {
         >
           <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-6">
             <button
-              // disabled={players().length < 4}
+              disabled={game()!.players?.length < 4}
               onClick={handleStartGame}
               class={`w-full py-4 rounded-xl font-semibold text-white transition-colors ${
                 game()!.players.length >= 4

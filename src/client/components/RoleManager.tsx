@@ -1,37 +1,33 @@
-import { createSignal } from "solid-js";
+import type { Accessor } from "solid-js";
 import { roleDefinitions } from "../../shared/role-definitions";
+import { AVAILABLE_CARDS } from "../utils";
 
-type RoleKey = keyof typeof roleDefinitions;
+interface RoleManagerProps {
+  cards: Accessor<Set<number>>;
+  toggleCards: (cardId: (typeof AVAILABLE_CARDS)[number]["id"]) => void;
+}
 
-export function RoleManager() {
-	const [selectedRoles, setSelectedRoles] = createSignal<RoleKey[]>([]);
-
-	const toggleRole = (role: RoleKey) => {
-		setSelectedRoles((prev) =>
-			prev.includes(role)
-				? prev.filter((r) => r !== role)
-				: [...prev, role]
-		);
-	};
-
-	return (
-		<div class="bg-white/10 backdrop-blur-lg rounded-3xl p-6 mb-6">
-			<h3 class="text-lg font-semibold text-white mb-3">Select Roles</h3>
-			<div class="grid grid-cols-2 gap-4">
-				{Object.entries(roleDefinitions).map(([key, role]) => (
-					<button
-						onClick={() => toggleRole(key as RoleKey)}
-						class={`p-4 rounded-xl border text-white transition-colors ${
-							selectedRoles().includes(key as RoleKey)
-								? `bg-blue-900`
-								: "bg-white/20 border-white/30"
-						}`}
-					>
-						<span class="text-2xl">{role.icon}</span>
-						<p class="mt-2 text-sm font-medium">{role.name}</p>
-					</button>
-				))}
-			</div>
-		</div>
-	);
+export function RoleManager({ cards, toggleCards }: RoleManagerProps) {
+  return (
+    <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-6 mb-6">
+      <h3 class="text-lg font-semibold text-white mb-3">Select Roles</h3>
+      <div class="grid grid-cols-2 gap-4">
+        {AVAILABLE_CARDS.map((item) => (
+          <button
+            onClick={() => toggleCards(item.id)}
+            class={`p-4 rounded-xl border text-white transition-colors ${
+              cards().has(item.id)
+                ? `bg-blue-900`
+                : "bg-white/20 border-white/30"
+            }`}
+          >
+            <span class="text-2xl">{roleDefinitions[item.role].icon}</span>
+            <p class="mt-2 text-sm font-medium">
+              {roleDefinitions[item.role].name}
+            </p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }

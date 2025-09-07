@@ -23,7 +23,8 @@ interface Game {
     secondPlayerId: string;
   }[];
   players: Player[];
-  availableRoles: Role[];
+  availableCards: Role[];
+  cards: Role[];
 }
 
 interface RoleDefinition {

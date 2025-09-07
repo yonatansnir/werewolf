@@ -1,5 +1,4 @@
 import express from "express";
-import { getAvailableRoles } from "./roles";
 import { generatePlayer } from "./players.utils";
 
 const app = express();
@@ -11,22 +10,28 @@ const games = new Map<string, Game>();
 const connections = new Map<string, Connection>();
 
 app.post("/api/create-game", (req, res) => {
+  console.log("Create game", req.body);
   const playerName = req.body.playerName;
+  const cards = req.body.cards;
   if (!playerName) throw new Error("Player name is required");
+  if (!Array.isArray(cards) || cards.length < 4) {
+    throw new Error("At least 4 cards are required to start a game");
+  }
 
   const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const availableRoles = getAvailableRoles();
   const player = generatePlayer(playerName, true);
   console.log("Create player", player);
-  const index = Math.floor(Math.random() * availableRoles.length);
-  player.role = availableRoles.splice(index, 1)[0];
+  const availableCards = [...cards];
+  const index = Math.floor(Math.random() * availableCards.length);
+  player.role = availableCards.splice(index, 1)[0];
 
   const game: Game = {
     id: gameId,
     gameState: "lobby",
     players: [player],
     swapTaskQueue: [],
-    availableRoles,
+    availableCards: availableCards,
+    cards,
   };
   console.log("Create Game", game);
   games.set(gameId, game);
@@ -48,12 +53,12 @@ app.post("/api/join-game", (req, res) => {
 
   console.log("Game", game);
 
-  const availableRoles = game.availableRoles;
-  if (availableRoles.length === 0) throw new Error("No available roles");
+  const availableCards = game.availableCards;
+  if (availableCards.length === 0) throw new Error("No available cards");
 
   const player = generatePlayer(playerName, false);
-  const index = Math.floor(Math.random() * availableRoles.length);
-  player.role = availableRoles.splice(index, 1)[0];
+  const index = Math.floor(Math.random() * availableCards.length);
+  player.role = availableCards.splice(index, 1)[0];
 
   game.players.push(player);
 
@@ -211,11 +216,10 @@ app.post("/api/restart-game", (req, res) => {
   game.gameState = "roles";
   game.players.forEach((p) => (p.isReady = false));
   game.swapTaskQueue = [];
-  const availableRoles = getAvailableRoles();
-  game.availableRoles = availableRoles;
+  game.availableCards = [...game.cards];
   game.players.forEach((p) => {
-    const index = Math.floor(Math.random() * availableRoles.length);
-    p.role = availableRoles.splice(index, 1)[0];
+    const index = Math.floor(Math.random() * game.availableCards.length);
+    p.role = game.availableCards.splice(index, 1)[0];
   });
 
   game.players.forEach((p) => {
