@@ -1,3 +1,4 @@
+import { resolve } from "path";
 import express from "express";
 import { generatePlayer } from "./players.utils";
 
@@ -230,6 +231,10 @@ app.post("/api/restart-game", (req, res) => {
   });
   res.json({ status: "OK" });
 });
+
+const staticFilesPath = resolve(process.cwd(), "dist");
+console.log("Serving static files from", staticFilesPath);
+app.use(express.static(staticFilesPath));
 
 app.listen(8080, () => {
   console.log("Server running on http://localhost:8080");

@@ -3,7 +3,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "bunx --bun vite",
+    "build": "bunx --bun vite build",
     "server": "bun --watch ./src/backend/server.ts"
   },
   "devDependencies": {
