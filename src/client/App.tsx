@@ -38,7 +38,9 @@ export function App() {
         <Match when={game()?.gameState === "lobby"} children={<Lobby />} />
         <Match when={game()?.gameState === "roles"} children={<Role />} />
         <Match
-          when={game()?.gameState === "playing"}
+          when={
+            game()?.gameState === "playing" || game()?.gameState === "game_over"
+          }
           children={<GameTimer />}
         />
       </Switch>

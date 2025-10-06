@@ -1,4 +1,4 @@
-type GameState = "menu" | "lobby" | "roles" | "playing" | "game_over";
+type GameState = "lobby" | "roles" | "playing" | "game_over";
 
 type Role = "werewolf" | "villager" | "seer" | "troublemaker" | "robber";
 

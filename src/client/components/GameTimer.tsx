@@ -1,7 +1,7 @@
-import { createSignal, onCleanup, Show, For } from "solid-js";
+import { createSignal, onCleanup, Show, For, createEffect } from "solid-js";
 import { game, playerId } from "../signals";
 import { roleDefinitions } from "../../shared/role-definitions";
-import { restartGame } from "../services";
+import { changeGameState } from "../services";
 
 const THREE_MINUTES_IN_SECOUND = 60 * 3;
 
@@ -39,10 +39,20 @@ export function GameTimer() {
     });
   }, 1000);
 
+  createEffect(() => {
+    if (game()?.gameState === "game_over") {
+      setProgress({ timeLeft: 0, percent: 0, color: "bg-red-500" });
+      clearInterval(timer);
+    }
+  });
+
   onCleanup(() => clearInterval(timer));
 
-  const handleRestartGame = async () => {
-    await restartGame(game()!.id, playerId()!);
+  const handleChangeGameState = async () => {
+    const gameState: GameState =
+      progress().timeLeft < 1 ? "roles" : "game_over";
+
+    await changeGameState(game()!.id, playerId()!, gameState);
   };
 
   const formatTime = (seconds: number) => {
@@ -64,7 +74,9 @@ export function GameTimer() {
           style={{ width: `${progress().percent * 100}%` }}
         ></div>
       </div>
-      <Show when={progress().timeLeft <= 0}>
+      <Show
+        when={progress().timeLeft <= 0 || game()?.gameState === "game_over"}
+      >
         <div class="grid-cols-2 gap-1">
           <For each={game()!.players}>
             {(p) => {
@@ -92,10 +104,10 @@ export function GameTimer() {
       </Show>
       <Show when={game()?.players.find((p) => p.id === playerId())?.isHost}>
         <button
-          onClick={handleRestartGame}
+          onClick={handleChangeGameState}
           class="my-4 p-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold text-lg transition-colors cursor-pointer"
         >
-          Restart Game
+          {progress().timeLeft < 1 ? "Restart Game" : "End Game"}
         </button>
       </Show>
     </div>

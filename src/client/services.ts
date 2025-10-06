@@ -52,11 +52,19 @@ export async function updatePlayerToBeReady(gameId: string, playerId: string) {
   return response.data;
 }
 
-export async function restartGame(gameId: string, playerId: string) {
-  const response = await axios.post<{ status: "OK" }>("/api/restart-game", {
-    gameId,
-    playerId,
-  });
+export async function changeGameState(
+  gameId: string,
+  playerId: string,
+  gameState: Extract<GameState, "roles" | "game_over">
+) {
+  const response = await axios.post<{ status: "OK" }>(
+    "/api/change-game-state",
+    {
+      gameId,
+      playerId,
+      gameState,
+    }
+  );
 
   return response.data;
 }

@@ -34,7 +34,7 @@ app.post("/api/create-game", (req, res) => {
     availableCards: availableCards,
     cards,
   };
-  console.log("Create Game", game);
+  console.log("Created Game", game);
   games.set(gameId, game);
 
   res.json({ game, player });
@@ -204,24 +204,29 @@ app.post("/api/ready", (req, res) => {
   res.json({ status: "OK" });
 });
 
-app.post("/api/restart-game", (req, res) => {
-  console.log("Restart game", req.body);
-  const { gameId, playerId } = req.body;
+app.post("/api/change-game-state", (req, res) => {
+  console.log("Change game state", req.body);
+  const { gameId, playerId, gameState } = req.body;
   if (typeof gameId !== "string") throw new Error("Game ID is required");
   if (typeof playerId !== "string") throw new Error("Player ID is required");
   const game = games.get(gameId);
   if (!game) throw new Error("Game not found");
   const isPlayerHost = game.players.find((p) => p.id === playerId)?.isHost;
-  if (!isPlayerHost) throw new Error("Only the host can restart the game");
+  if (!isPlayerHost) throw new Error("Only the host can change the game state");
+  if (!["roles", "game_over"].includes(gameState)) {
+    throw new Error("Invalid game state");
+  }
 
-  game.gameState = "roles";
-  game.players.forEach((p) => (p.isReady = false));
-  game.swapTaskQueue = [];
-  game.availableCards = [...game.cards];
-  game.players.forEach((p) => {
-    const index = Math.floor(Math.random() * game.availableCards.length);
-    p.role = game.availableCards.splice(index, 1)[0];
-  });
+  game.gameState = gameState;
+  if (gameState === "roles") {
+    game.players.forEach((p) => (p.isReady = false));
+    game.swapTaskQueue = [];
+    game.availableCards = [...game.cards];
+    game.players.forEach((p) => {
+      const index = Math.floor(Math.random() * game.availableCards.length);
+      p.role = game.availableCards.splice(index, 1)[0];
+    });
+  }
 
   game.players.forEach((p) => {
     const connection = connections.get(p.id);
