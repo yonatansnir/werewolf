@@ -1,0 +1,17 @@
+# Ignore Git files
+.git/
+
+# Ignore Node.js dependencies (install inside container)
+node_modules/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore build/temp files
+dist/
+build/
+
+# Ignore logs and secrets
+*.log
+.env
